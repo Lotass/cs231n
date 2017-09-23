@@ -69,13 +69,12 @@ class LinearClassifier(object):
             # TODO:                                                                 #
             # Update the weights using the gradient and the learning rate.          #
             #########################################################################
-            pass
+            self.W = self.W - learning_rate * grad
             #########################################################################
             #                       END OF YOUR CODE                                #
             #########################################################################
-
-            if verbose and it % 100 == 0:
-                print('iteration %d / %d: loss %f' % (it, num_iters, loss))
+            if verbose and i % 100 == 0:
+                print('iteration %d / %d: loss %f' % (i, num_iters, loss))
 
         return loss_history
 
@@ -98,7 +97,7 @@ class LinearClassifier(object):
         # TODO:                                                                   #
         # Implement this method. Store the predicted labels in y_pred.            #
         ###########################################################################
-        pass
+        y_pred = X.dot(self.W).argmax(axis=1)
         ###########################################################################
         #                           END OF YOUR CODE                              #
         ###########################################################################
