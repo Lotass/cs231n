@@ -69,6 +69,12 @@ class TwoLayerNet(object):
         W2, b2 = self.params['W2'], self.params['b2']
         N, D = X.shape
 
+        # print('W1.shape', W1.shape)
+        # print('b1.shape', b1.shape)
+        # print('W2.shape', W2.shape)
+        # print('b2.shape', b2.shape)
+        # print('X.shape', X.shape)
+
         # Compute the forward pass
         scores = None
         #############################################################################
@@ -77,8 +83,9 @@ class TwoLayerNet(object):
         # shape (N, C).                                                             #
         #############################################################################
 
-        z1 = np.maximum(X.dot(W1) + b1, 0)
-        z2 = z1.dot(W2) + b2
+        z1 = X.dot(W1) + b1
+        a1 = np.maximum(z1, 0)
+        z2 = a1.dot(W2) + b2
 
         scores = z2
         #############################################################################
@@ -116,6 +123,16 @@ class TwoLayerNet(object):
         #############################################################################
         dprobs = probs
         dprobs[range(N), y] -= 1
+
+        grads['W2'] = a1.T.dot(dprobs) / N + 2 * reg * W2
+        grads['b2'] = dprobs.sum(axis=0) / N
+
+        da1 = dprobs.dot(W2.T)
+        dz1 = (a1 > 0).astype(np.int) * da1
+        
+        grads['W1'] = X.T.dot(dz1) / N + 2 * reg * W1
+        grads['b1'] = dz1.sum(axis=0) / N
+
         #############################################################################
         #                              END OF YOUR CODE                             #
         #############################################################################
