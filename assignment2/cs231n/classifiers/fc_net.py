@@ -285,18 +285,26 @@ class FullyConnectedNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         loss, dscores = softmax_loss(scores, y)
+        
         decreasing = (0, -1)  # forces range to decrease
 
-        dActivations = []
+        # print('caches', len(caches))
+        # print('activations', len(activations))
+        # print('num_layers', self.num_layers)
+
+
+        
         for l in range(self.num_layers, *decreasing):
-            if l == self.num_layers - 1:
-                dA, dW, db = affine_backward(dscores, caches[l])
+            loss += self.reg * 0.5 * np.square(self.params['W' + str(l)]).sum()
+
+            if l == self.num_layers:
+                dA, dW, db = affine_backward(dscores, caches[l-1])
             else:
-                dA, dW, db = affine_relu_backward(dA1, cache1)
+                dA, dW, db = affine_relu_backward(dA_prev, caches[l-1])
 
-            dActivations.append(dA)
-            grads['W' + str(l+1)] = dW + self.reg * self.params['W' + str(l+1)]
-
+            dA_prev = dA
+            grads['W' + str(l)] = dW + self.reg * self.params['W' + str(l)]
+            grads['b' + str(l)] = db
 
 
         ############################################################################
