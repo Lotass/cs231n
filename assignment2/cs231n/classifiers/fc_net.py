@@ -183,10 +183,8 @@ class FullyConnectedNet(object):
         ############################################################################
         dims = [input_dim, *hidden_dims, num_classes]
         for l in range(self.num_layers):
-            self.params['W' + str(l + 1)] = np.random.randn(dims[l],
-                                                            dims[l + 1]) * weight_scale
-            self.params['b' + str(l + 1)
-                        ] = np.random.randn(dims[l + 1]) * weight_scale
+            self.params['W' + str(l + 1)] = np.random.randn(dims[l],dims[l + 1]) * weight_scale
+            self.params['b' + str(l + 1)] = np.zeros(dims[l + 1]) * weight_scale
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -285,14 +283,7 @@ class FullyConnectedNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         loss, dscores = softmax_loss(scores, y)
-        
         decreasing = (0, -1)  # forces range to decrease
-
-        # print('caches', len(caches))
-        # print('activations', len(activations))
-        # print('num_layers', self.num_layers)
-
-
         
         for l in range(self.num_layers, *decreasing):
             loss += self.reg * 0.5 * np.square(self.params['W' + str(l)]).sum()
