@@ -26,7 +26,7 @@ def affine_forward(x, w, b):
     # TODO: Implement the affine forward pass. Store the result in out. You   #
     # will need to reshape the input into rows.                               #
     ###########################################################################
-    
+
     out = x.reshape(N, -1).dot(w) + b
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -59,7 +59,7 @@ def affine_backward(dout, cache):
     ###########################################################################
     db = dout.sum(axis=0)
     dx = dout.dot(w.T).reshape(x.shape)
-    dw = x.reshape(N,-1).T.dot(dout)
+    dw = x.reshape(N, -1).T.dot(dout)
     # db = np.zeros_like(b)
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -82,7 +82,7 @@ def relu_forward(x):
     ###########################################################################
     # TODO: Implement the ReLU forward pass.                                  #
     ###########################################################################
-    out = np.maximum(0,x)
+    out = np.maximum(0, x)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -358,15 +358,46 @@ def conv_forward_naive(x, w, b, conv_param):
       W' = 1 + (W + 2 * pad - WW) / stride
     - cache: (x, w, b, conv_param)
     """
-    out = None
+    
     ###########################################################################
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
+
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+
+    pad, stride = conv_param['pad'], conv_param['stride']
+    pad1 = (pad, pad)
+    pad0 = (0, 0)
+    # pads along dimensions
+    pad_mask = (pad0, pad0, pad1, pad1)
+    x_padded = np.pad(x, pad_mask, 'constant')
+
+    H_ = 1 + (H + 2 * pad - HH) // stride
+    W_ = 1 + (W + 2 * pad - WW) // stride
+
+    out = np.zeros((N,F,H_,W_))
+    
+
+    def create_mask(stride, WW, HH, x, y):
+        x_step = stride * x
+        y_step = stride * y
+
+        x_mask = slice(x_step, x_step + WW)
+        y_mask = slice(y_step, y_step + HH)
+        return x_mask, y_mask
+
+    for n in range(N):  # examples
+        padded_img = x_padded[n]
+        for f in range(F):  # filters
+            filtr = w[f]
+            for x in range(W_):
+                for y in range(H_):
+                    x_mask, y_mask = create_mask(stride, WW, HH, x, y)
+                    activations = padded_img[:,x_mask, y_mask] * filtr
+                    out[n,f,x,y] += activations.sum() + b[f]
+
     cache = (x, w, b, conv_param)
     return out, cache
 
