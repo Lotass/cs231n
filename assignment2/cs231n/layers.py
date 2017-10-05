@@ -335,6 +335,15 @@ def dropout_backward(dout, cache):
     return dx
 
 
+def create_mask(stride, WW, HH, x, y):
+    x_step = stride * x
+    y_step = stride * y
+
+    x_mask = slice(x_step, x_step + WW)
+    y_mask = slice(y_step, y_step + HH)
+    return x_mask, y_mask
+
+
 def conv_forward_naive(x, w, b, conv_param):
     """
     A naive implementation of the forward pass for a convolutional layer.
@@ -358,7 +367,7 @@ def conv_forward_naive(x, w, b, conv_param):
       W' = 1 + (W + 2 * pad - WW) / stride
     - cache: (x, w, b, conv_param)
     """
-    
+
     ###########################################################################
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
@@ -377,28 +386,19 @@ def conv_forward_naive(x, w, b, conv_param):
     H_ = 1 + (H + 2 * pad - HH) // stride
     W_ = 1 + (W + 2 * pad - WW) // stride
 
-    out = np.zeros((N,F,H_,W_))
-    
-
-    def create_mask(stride, WW, HH, x, y):
-        x_step = stride * x
-        y_step = stride * y
-
-        x_mask = slice(x_step, x_step + WW)
-        y_mask = slice(y_step, y_step + HH)
-        return x_mask, y_mask
+    out = np.zeros((N, F, H_, W_))
 
     for n in range(N):  # examples
         padded_img = x_padded[n]
         for f in range(F):  # filters
             filtr = w[f]
-            for x in range(W_):
-                for y in range(H_):
-                    x_mask, y_mask = create_mask(stride, WW, HH, x, y)
-                    activations = padded_img[:,x_mask, y_mask] * filtr
-                    out[n,f,x,y] += activations.sum() + b[f]
+            for sw in range(W_):
+                for sh in range(H_):
+                    w_mask, h_mask = create_mask(stride, WW, HH, sw, sh)
+                    activations = padded_img[:, w_mask, h_mask] * filtr
+                    out[n, f, sw, sh] += activations.sum() + b[f]
 
-    cache = (x, w, b, conv_param)
+    cache = (x_padded, w, b, conv_param)
     return out, cache
 
 
@@ -415,15 +415,27 @@ def conv_backward_naive(dout, cache):
     - dw: Gradient with respect to w
     - db: Gradient with respect to b
     """
-    dx, dw, db = None, None, None
-    ###########################################################################
-    # TODO: Implement the convolutional backward pass.                        #
-    ###########################################################################
-    pass
-    ###########################################################################
-    #                             END OF YOUR CODE                            #
-    ###########################################################################
-    return dx, dw, db
+
+    x, w, b, conv_param = cache
+    dx, dw, db = np.zeros_like(x), np.zeros_like(w), np.zeros_like(b)
+
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    N, F, H_, W_ = dout.shape
+
+    pad, stride = conv_param['pad'], conv_param['stride']
+    trim_pad = slice(pad, -pad)
+    
+    for f in range(F):
+        db[f] = dout[:, f].sum()
+        for n in range(N):
+            for sw in range(W_):
+                for sh in range(H_):
+                    w_mask, h_mask = create_mask(stride, WW, HH, sw, sh)
+                    dw[f] += x[n, :, w_mask, h_mask] * dout[n, f, sw, sh]
+                    dx[n, :, w_mask, h_mask] += w[f] * dout[n, f, sw, sh]
+
+    return dx[:, :, trim_pad, trim_pad], dw, db
 
 
 def max_pool_forward_naive(x, pool_param):
