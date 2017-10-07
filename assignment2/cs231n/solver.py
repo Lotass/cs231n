@@ -120,6 +120,8 @@ class Solver(object):
         self.X_val = data['X_val']
         self.y_val = data['y_val']
 
+        print('in init?', self.model.params['W1'].shape)
+
         # Unpack keyword arguments
         self.update_rule = kwargs.pop('update_rule', 'sgd')
         self.optim_config = kwargs.pop('optim_config', {})
@@ -185,8 +187,10 @@ class Solver(object):
         # Perform a parameter update
         for p, w in self.model.params.items():
             dw = grads[p]
+            print('printing dw shapes',dw.shape)
             config = self.optim_configs[p]
             next_w, next_config = self.update_rule(w, dw, config)
+            print(next_w)
             self.model.params[p] = next_w
             self.optim_configs[p] = next_config
 
@@ -229,6 +233,7 @@ class Solver(object):
         - acc: Scalar giving the fraction of instances that were correctly
           classified by the model.
         """
+        print('in check acc',self.model.params['W1'].shape)
 
         # Maybe subsample the data
         N = X.shape[0]
@@ -263,6 +268,7 @@ class Solver(object):
         num_iterations = self.num_epochs * iterations_per_epoch
 
         for t in range(num_iterations):
+            print('in train', self.model.params['W1'].shape)
             self._step()
 
             # Maybe print training loss

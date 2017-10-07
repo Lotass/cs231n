@@ -504,7 +504,7 @@ def max_pool_backward_naive(dout, cache):
             max_val = pool.max(axis=2).max(axis=2)[:, :, np.newaxis, np.newaxis]
             upstream = dout[:, :, w, h][:, :, np.newaxis, np.newaxis]
             dx[:, :, w_mask, h_mask] = (pool >= max_val) * upstream
-            
+
     return dx
 
 
